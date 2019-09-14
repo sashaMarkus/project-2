@@ -7,6 +7,7 @@ const app = {
     newArrayOfCoins: [],
     coinsselectedArray: [],
     allCoinObjArray: [],
+    chartHandlerArray: [],
     coinId: 0
 }
 
@@ -36,6 +37,7 @@ function main() {
     allCoinsRequest();
     $('#homeBtn').click(mainBuild);
     $('.chosenCoinsBtn').click(chosenCoinsBtn);
+    $('#liveReportsBtn').click(loadLiveReports);
 }
 
 function mainBuild() {
@@ -50,7 +52,7 @@ function mainBuild() {
             <h3>${element.symbol.toUpperCase()}</h3>
             <h7>${element.name}<br> <br></h7>
             <button id="button${idx}" class="btn-primary" data-coinid="${element.id}">More info</button>
-                <div class="infoDropDown" id="dropdown${element.coinId}"></div>`);
+                <div id="dropdown${element.coinId}"></div>`);
         $(`#toggleButton${element.coinId}`).click(toggleCoin);
         $(`#button${idx}`).click(moreInfoBtn);
     });
@@ -58,49 +60,49 @@ function mainBuild() {
     updateToggles();
 }
 
-function toggleCoin() { 
-        let id = this.id.substr(12);
-        if (this.checked) { //check
-            for (let i = 0; i < app.allCoinObjArray.length; i++) {
-                if (id == app.allCoinObjArray[i].id) {
-                    app.allCoinObjArray[i].checked = true;
-                    let idx = app.coinsselectedArray.indexOf(app.allCoinObjArray[i]);
-                    if (idx == -1) {
-                        app.coinsselectedArray.push(app.allCoinObjArray[i]);
-                        isCheckedFull();
-    
-                    }
-                }
-            }
-        } else if (!this.checked) { //uncheck
-            for (let i = 0; i < app.allCoinObjArray.length; i++) {
-                if (id == app.allCoinObjArray[i].id) {
-                    app.allCoinObjArray[i].checked = false;
-                    let idx = app.coinsselectedArray.indexOf(app.allCoinObjArray[i]);
-                    app.coinsselectedArray.splice(idx, 1);
+function toggleCoin() {
+    let id = this.id.substr(12);
+    if (this.checked) { //check
+        for (let i = 0; i < app.allCoinObjArray.length; i++) {
+            if (id == app.allCoinObjArray[i].id) {
+                app.allCoinObjArray[i].checked = true;
+                let idx = app.coinsselectedArray.indexOf(app.allCoinObjArray[i]);
+                if (idx == -1) {
+                    app.coinsselectedArray.push(app.allCoinObjArray[i]);
+                    isCheckedFull();
+
                 }
             }
         }
-
-        let uncheckedCoins = [];
-        for(let i = 0; i < app.allCoinObjArray.length;i++){
-            if(!app.allCoinObjArray[i].checked){
-                 uncheckedCoins.push(app.allCoinObjArray[i]);
+    } else if (!this.checked) { //uncheck
+        for (let i = 0; i < app.allCoinObjArray.length; i++) {
+            if (id == app.allCoinObjArray[i].id) {
+                app.allCoinObjArray[i].checked = false;
+                let idx = app.coinsselectedArray.indexOf(app.allCoinObjArray[i]);
+                app.coinsselectedArray.splice(idx, 1);
             }
         }
+    }
 
-        if(app.coinsselectedArray.length >=5){
-            for(let i = 0; i < uncheckedCoins.length; i++){
-                let toggleButton = document.getElementById('toggleButton' + uncheckedCoins[i].id);
-                toggleButton.disabled = true;
-            }
-        }else{
-            for(let i = 0; i < app.allCoinObjArray.length;i++){
-                let toggleButton = document.getElementById('toggleButton' + app.allCoinObjArray[i].id);
-                toggleButton.disabled = false;
-            }
+    let uncheckedCoins = [];
+    for (let i = 0; i < app.allCoinObjArray.length; i++) {
+        if (!app.allCoinObjArray[i].checked) {
+            uncheckedCoins.push(app.allCoinObjArray[i]);
         }
-   
+    }
+
+    if (app.coinsselectedArray.length >= 5) {
+        for (let i = 0; i < uncheckedCoins.length; i++) {
+            let toggleButton = document.getElementById('toggleButton' + uncheckedCoins[i].id);
+            toggleButton.disabled = true;
+        }
+    } else {
+        for (let i = 0; i < app.allCoinObjArray.length; i++) {
+            let toggleButton = document.getElementById('toggleButton' + app.allCoinObjArray[i].id);
+            toggleButton.disabled = false;
+        }
+    }
+
 }
 
 function isCheckedFull() {
@@ -208,6 +210,7 @@ function emptyRow() {
 }
 
 async function moreInfoBtn() {
+    console.log("this clicked");
     let coinIdx = (this.id).substr(6);
     let coinID = this.dataset.coinid;
     let moreInfoDiv = document.getElementById('dropdown' + coinIdx);
@@ -225,10 +228,105 @@ async function moreInfoBtn() {
 
 }
 
-function callMoreInfo(id) {
+function loadLiveReports() {
+    $('.row').remove();
+    mainBuild = document.getElementById('mainBuild');
+    let newRow = document.createElement('div');
+    newRow.className = 'row';
+    newRow.id = 'row';
+    mainBuild.appendChild(newRow);
+    if (app.coinsselectedArray.length > 0) {
+        CreateLiveGraph();
+    } else {
+        alert('You gotta choose up to 5 coins to show a live report.');
+    }
 
-    return
 }
+
+function CreateLiveGraph() {
+
+    let chartTitle = '';
+    const chartDiv = document.createElement("div");
+    chartDiv.id = "chartDiv";
+    chartDiv.className = 'animated fadein'
+    var options = {
+        exportEnabled: true,
+        animationEnabled: true,
+        title: {
+            text: chartTitle,
+        },
+
+        axisX: {
+            title: "Time"
+        },
+        axisY: {
+            title: "Coin Value",
+            titleFontColor: "#4F81BC",
+            lineColor: "#4F81BC",
+            labelFontColor: "#4F81BC",
+            tickColor: "#4F81BC",
+            includeZero: false
+        },
+        axisY2: {
+            titleFontColor: "#C0504E",
+            lineColor: "#C0504E",
+            labelFontColor: "#C0504E",
+            tickColor: "#C0504E",
+            includeZero: false
+        },
+        toolTip: {
+            shared: true
+        },
+        legend: {
+            cursor: "pointer",
+            itemclick: toggleDataSeries,
+        },
+        data: [],
+    };
+
+    $(chartDiv).CanvasJSChart(options);
+    let chart = $(chartDiv).CanvasJSChart();
+    for (let i = 0; i < app.coinsselectedArray.length; i++) { //Api loop
+        let coinObj = {
+            type: "spline",
+            name: app.coinsselectedArray[i].name,
+            showInLegend: true,
+            xValueFormatString: "HH:mm:ss",
+            yValueFormatString: "$#,##0.#",
+            dataPoints: [],
+
+        }
+        options.title.text += `${app.coinsselectedArray[i].symbol},  `.toUpperCase();
+        options.title.text = options.title.text.substr(0, options.title.text.length - 1);
+        options.data.push(coinObj);
+
+        let apiHandler = setInterval(() => {
+            //app.clearDiv();
+            $.getJSON('https://api.coingecko.com/api/v3/coins/' + app.coinsselectedArray[i].id, function (res) {
+                coinObj.dataPoints.push({ x: new Date(), y: res.market_data.current_price.usd });
+                chart.render();
+            });
+        }, 2000);
+        app.chartHandlerArray.push(apiHandler);
+
+    }
+    options.title.text += "to USD";
+    document.body.appendChild(chartDiv);
+
+
+
+
+    function toggleDataSeries(e) {
+        console.log(e);
+        if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+            e.dataSeries.visible = false;
+        } else {
+            e.dataSeries.visible = true;
+        }
+        e.chart.render();
+    }
+}
+
 
 
 main();
