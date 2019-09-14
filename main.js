@@ -2,6 +2,12 @@
 API's:
 https://api.coingecko.com/api/v3/coins/{id}
 */
+
+//Problems with graph Line 311
+
+
+
+
 const app = {
     MAX_SECONDS: 120,
     newArrayOfCoins: [],
@@ -302,7 +308,7 @@ function CreateLiveGraph() {
 
         let apiHandler = setInterval(() => {
             //app.clearDiv();
-            $.getJSON('https://api.coingecko.com/api/v3/coins/' + app.coinsselectedArray[i].id, function (res) {
+            $.getJSON('https://api.coingecko.com/api/v3/coins/bitcoin', function (res) { //couldn't fix the problem the graph works but i cant get the id of the array right for some reason
                 coinObj.dataPoints.push({ x: new Date(), y: res.market_data.current_price.usd });
                 chart.render();
             });
