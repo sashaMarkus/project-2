@@ -28,8 +28,8 @@ function allCoinsRequest() {
             app.newArrayOfCoins.map((element) => {
                 element.coinId = app.coinId;
                 app.coinId++;
-                //console.log(element);
-                let coinObj = new Coin(element.coinId, element.symbol, element.name, false);
+                //console.log(obj);
+                let coinObj = new Coin(element.id, element.coinId, element.symbol, element.name, false);
                 app.allCoinObjArray.push(coinObj);
             });
             window.sessionStorage.setItem('allcoins', JSON.stringify(app.newArrayOfCoins));
@@ -44,15 +44,23 @@ function main() {
     $('#homeBtn').click(mainBuild);
     $('.chosenCoinsBtn').click(chosenCoinsBtn);
     $('#liveReportsBtn').click(loadLiveReports);
+    $('#searchBtn').click(search);
 }
 
+function clearApi() {
+    for (let i = 0; i < app.chartHandlerArray.length; i++) {
+        clearInterval(app.chartHandlerArray[i]);
+    }
+}
 function mainBuild() {
     emptyRow();
+    clearApi();
     app.newArrayOfCoins.forEach((element, idx) => {
+        //console.log(element);
         $('#row').append(`<div id="cardBody${idx}" class="card cardDiv col-md-2 mr-3 mt-3 "></div>`);
         $('#cardBody' + idx).append(`
             <label class="switch">
-                <input id="toggleButton${element.coinId}" class="myToggleBtn" data-coin-name="${element.symbol}" data-coin-id-for-active="${element.coinId}" type="checkbox">
+                <input id="toggleButton${element.coinId}" class="myToggleBtn" data-coin-name="${element.symbol}" data-original-id=${element.id} data-coin-id-for-active="${element.coinId}" type="checkbox">
                 <div class="slider round"></div>
             </label>
             <h3>${element.symbol.toUpperCase()}</h3>
@@ -62,11 +70,12 @@ function mainBuild() {
         $(`#toggleButton${element.coinId}`).click(toggleCoin);
         $(`#button${idx}`).click(moreInfoBtn);
     });
-
     updateToggles();
 }
 
 function toggleCoin() {
+    console.log(this);
+    console.log(app.coinsselectedArray);
     let id = this.id.substr(12);
     if (this.checked) { //check
         for (let i = 0; i < app.allCoinObjArray.length; i++) {
@@ -136,14 +145,16 @@ function writePopUp() {
         </label>
         <h3>${element.symbol.toUpperCase()}</h3>
         <h7>${element.name}<br> <br></h7>
-        </div>`
-        $(`#popup-t${element.id}`).click(toggleCoin);
+        </div>`;
+
+        let toggle = document.getElementById('switch' + element.id);
+        toggle.addEventListener('click', toggleCoin);
     }
 
     for (let i = 0; i < app.coinsselectedArray.length; i++) {
         let element = app.coinsselectedArray[i];
+        let toggle = document.getElementById('popup-t' + element.id);
         if (element.checked) {
-            let toggle = document.getElementById('popup-t' + element.id);
             toggle.checked = true;
         }
     }
@@ -152,11 +163,24 @@ function writePopUp() {
     closeBtn.className = 'closeBtn';
     closeBtn.addEventListener('click', () => {
         $('.overlay').remove();
+        updateHomeToggles();
     });
     popUp.appendChild(closeBtn);
-
 }
-function Coin(id, symbol, name, checked) {
+function updateHomeToggles() {
+    console.log(app.allCoinObjArray);
+    for (let i = 0; i < app.allCoinObjArray.length; i++) {
+        if (app.allCoinObjArray[i].checked) {
+            $('#toggleButton' + app.allCoinObjArray[i].id).attr('checked', true);
+        } else {
+            $('#toggleButton' + app.allCoinObjArray[i].id).attr('checked', false);
+        }
+
+
+    }
+}
+function Coin(originalId, id, symbol, name, checked) {
+    this.originalId = originalId;
     this.id = id;
     this.symbol = symbol;
     this.name = name;
@@ -220,7 +244,11 @@ async function moreInfoBtn() {
     let coinIdx = (this.id).substr(6);
     let coinID = this.dataset.coinid;
     let moreInfoDiv = document.getElementById('dropdown' + coinIdx);
+    moreInfoDiv.className = 'more-info';
+    console.log(moreInfoDiv);
     if ($(moreInfoDiv).is(':empty')) {
+        $(moreInfoDiv.parentNode).css('height', '322px');
+        moreInfoDiv.innerHTML = 'Loading...';
         $.getJSON('https://api.coingecko.com/api/v3/coins/' + coinID, (res) => {
             moreInfoDiv.innerHTML = `
             <img src="${res.image.small}"/> <br>
@@ -230,6 +258,7 @@ async function moreInfoBtn() {
         });
     } else {
         $(moreInfoDiv).empty();
+        $(moreInfoDiv.parentNode).css('height', '201px');
     }
 
 }
@@ -292,6 +321,11 @@ function CreateLiveGraph() {
 
     $(chartDiv).CanvasJSChart(options);
     let chart = $(chartDiv).CanvasJSChart();
+    let loading = document.createElement('div');
+    loading.id = 'loading';
+    loading.innerHTML = 'Loading...';
+    let mainBuild = document.getElementById('mainBuild');
+    mainBuild.appendChild(loading);
     for (let i = 0; i < app.coinsselectedArray.length; i++) { //Api loop
         let coinObj = {
             type: "spline",
@@ -307,13 +341,20 @@ function CreateLiveGraph() {
         options.data.push(coinObj);
 
         let apiHandler = setInterval(() => {
+
             //app.clearDiv();
-            $.getJSON('https://api.coingecko.com/api/v3/coins/bitcoin', function (res) { //couldn't fix the problem the graph works but i cant get the id of the array right for some reason
+            $.getJSON('https://api.coingecko.com/api/v3/coins/' + app.coinsselectedArray[i].originalId, function (res) { //couldn't fix the problem the graph works but i cant get the id of the array right for some reason
+                let loading = document.getElementById('loading');
+                if (loading) {
+                    loading.parentNode.removeChild(loading);
+                }
                 coinObj.dataPoints.push({ x: new Date(), y: res.market_data.current_price.usd });
                 chart.render();
             });
         }, 2000);
         app.chartHandlerArray.push(apiHandler);
+
+
 
     }
     options.title.text += "to USD";
@@ -333,6 +374,37 @@ function CreateLiveGraph() {
     }
 }
 
+function search(){
+    let searchValue = document.getElementById('search').value;
+    console.log(searchValue);
+    for(let i = 0; i < app.allCoinObjArray.length;i++){
+       
+        if(app.allCoinObjArray[i].originalId == searchValue){
+            console.log(app.allCoinObjArray[i]);
+            oneCoin(app.allCoinObjArray[i]);
+        }
+    }
 
+}
+
+function oneCoin(coinObj){
+
+    clearApi();
+        //console.log(element);
+        $('#row').append(`<div id="cardBody${coinObj.id}" class="card cardDiv col-md-2 mr-3 mt-3 "></div>`);
+        $('#cardBody' + coinObj.id).append(`
+            <label class="switch">
+                <input id="toggleButton${coinObj.id}" class="myToggleBtn" data-coin-name="${coinObj.symbol}" data-original-id=${coinObj.originalId} data-coin-id-for-active="${coinObj.originalId}" type="checkbox">
+                <div class="slider round"></div>
+            </label>
+            <h3>${coinObj.symbol.toUpperCase()}</h3>
+            <h7>${coinObj.name}<br> <br></h7>
+            <button id="button${coinObj.id}" class="btn-primary" data-coinid="${coinObj.originalId}">More info</button>
+                <div id="dropdown${coinObj.id}"></div>`);
+        $(`#toggleButton${coinObj.id}`).click(toggleCoin);
+        $(`#button${coinObj.id}`).click(moreInfoBtn);
+
+    updateToggles();
+}
 
 main();

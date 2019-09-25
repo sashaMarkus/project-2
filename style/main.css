@@ -1,6 +1,10 @@
 .cardDiv{   
-    float: left;
     margin: 10px;
+    height: 201px;
+    padding: 10px;
+}
+.more-info{
+  padding: 10px;
 }
 
 .heading {
@@ -88,6 +92,7 @@
   /* Rounded sliders */
   .slider.round {
     border-radius: 34px;
+    height: 34px;
   }
   
   .slider.round:before {
