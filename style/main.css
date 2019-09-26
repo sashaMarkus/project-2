@@ -1,7 +1,16 @@
+.parallax{
+  background-image: url('/images/bitcoinImage.jpg');
+  height: 500px;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
 .cardDiv{   
     margin: 10px;
     height: 201px;
     padding: 10px;
+    background-color: #afafe4;
 }
 .more-info{
   padding: 10px;

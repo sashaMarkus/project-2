@@ -188,6 +188,9 @@ function Coin(originalId, id, symbol, name, checked) {
 }
 
 function chosenCoinsBtn() {
+    if($('#chartDiv')){
+        $('#chartDiv').empty();
+    }
     $('.row').remove();
     mainBuild = document.getElementById('mainBuild');
     console.log(app.coinsselectedArray);
@@ -196,14 +199,14 @@ function chosenCoinsBtn() {
     newRow.id = 'row';
     mainBuild.appendChild(newRow);
     for (let i = 0; i < app.coinsselectedArray.length; i++) {
-        $('#row').append(`<div id="popup-cardBody${i}" class="card cardDiv col-md-2 mr-3 mt-3 ">
+        $('#row').append(`<div id="cardBody${i}" class="card cardDiv col-md-2 mr-3 mt-3 ">
         <label class="switch" id="switch${app.coinsselectedArray[i].id}">
         <input id="popup-t${app.coinsselectedArray[i].id}" class="myToggleBtn" type="checkbox">
         <div class="slider round"></div>
         </label>
         <h3>${app.coinsselectedArray[i].symbol.toUpperCase()}</h3>
         <h7>${app.coinsselectedArray[i].name}<br> <br></h7>
-        <button id="button${app.coinsselectedArray[i].id}" class="btn-primary" data-coinid="${app.coinsselectedArray[i].id}>More info</button>
+        <button id="button${app.coinsselectedArray[i].id}" class="btn-primary" data-coinid="${app.coinsselectedArray[i].id}">More info</button>
                 <div class="infoDropDown" id="dropdown${app.coinsselectedArray[i].id}"></div>
     </div>`);
 
